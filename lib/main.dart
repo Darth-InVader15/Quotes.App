@@ -1,27 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'quote.dart';
+import 'dart:async'; // Import for Timer class
+import 'quote_cart.dart';
+// import 'quote.dart';
+
 void main() {
   runApp(MaterialApp(
-    home: quoteList(),
+    home: QuoteList(),
   ));
 }
 
-class quoteList extends StatefulWidget {
-  const quoteList({super.key});
+class QuoteList extends StatefulWidget {
+  const QuoteList({Key? key}) : super(key: key);
 
   @override
-  State<quoteList> createState() => _quoteListState();
+  State<QuoteList> createState() => _QuoteListState();
 }
 
-class _quoteListState extends State<quoteList> {
-  List<Quote> quotes = [
-    Quote(quote: "You are remembered for the rules you break, not those you follow", author: "COD"),
-    Quote(quote: "Seize the day boys, make your lives extraordinary", author: "Dead Poet Society"),
-    Quote(quote: "Manzil milegi bhatak ke hi sahi, Gumrah toh woh hai jo ghar se nikle hi nahi", author: "Nope"),
-  ];
+class _QuoteListState extends State<QuoteList> {
+  List<Quote> quotes = [];
 
-  Widget quoteTemp(Quote quote) {
-    return QuoteCard(quote: quote);
+  Future<void> fetchQuotes() async {
+    const url = "https://api.quotable.io/random";
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        quotes = [Quote(quote: data['content'], author: data['author'])];
+      });
+    } else {
+      // Handle error
+      print("Failed to fetch quotes: ${response.statusCode}");
+    }
+  }
+
+  void deleteQuote(Quote quote) {
+    setState(() {
+      quotes.remove(quote);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchQuotes();
+    // Schedule periodic fetching of quotes
+    Timer.periodic(const Duration(seconds: 3), (_) => fetchQuotes());
   }
 
   @override
@@ -29,58 +55,38 @@ class _quoteListState extends State<quoteList> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          "Quotes for you",
-          style: TextStyle(color: Colors.amberAccent),
+        title: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+             Text(
+              "Quotes",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold
+              )),
+               Text(
+                " For You",
+                style: TextStyle(color: Colors.cyan,)
+                    // fontVariations: FontVariation.italic(0.2));
+
+            ),
+          ],
         ),
         centerTitle: true,
         backgroundColor: Colors.grey[900],
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: quotes.map((quote) {
-          return quoteTemp(quote);
-        }).toList(),
+      body: ListView(
+        children: quotes.map((quote) => QuoteCard(
+          quote: quote,
+          delete: deleteQuote,
+        )).toList(),
       ),
-    );
-  }
-}
-
-class QuoteCard extends StatelessWidget {
-
-  final Quote quote;
-  QuoteCard({required this.quote});
-  // const quoteCard({
-  //   super.key,
-  // });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.all(15.0),
-      color: Colors.grey[900], // Background color of the card
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            Text(
-              quote.quote,
-              style: const TextStyle(
-                color: Colors.amberAccent,
-                fontSize: 18.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 6.0),
-            Text(
-              "- ${quote.author}",
-              style: const TextStyle(
-                color: Colors.amberAccent,
-                fontSize: 16.0,
-                fontStyle: FontStyle.italic,
-              ),
-            )
-          ],
+      bottomNavigationBar: Container(
+        height: 40.0, // Adjust the height as needed
+        // color: Colors.,
+        child: Center(
+          child: Text(
+            "New Quotes every 3 seconds",
+            style: TextStyle(color: Colors.white),
+          ),
         ),
       ),
     );
