@@ -1,6 +1,9 @@
-# quotes
+# Quotes for You
 
-A new Flutter project.
+My first Flutter project was created to provide inspirational quotes without the annoyance of endless ads, a common feature in many motivational apps on the Play Store.
+
+## UI Design
+The UI is best suited for devices with OLED displays, and its color scheme draws inspiration from the classic XDA website (of the 2016 era).
 
 ## Getting Started
 
